@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserRole {
+  PETANI
+  UMKM
+  SUPERADMIN
+}
+
+enum HarvestStatus {
+  AVAILABLE
+  LOCKED_ESCROW
+  SOLD
+}
+
+enum OrderStatus {
+  PENDING_FARMER_CONFIRMATION  // Menunggu konfirmasi Petani (Terima/Tolak)
+  WAITING_FARMER_NEGO_APPROVAL // Menunggu persetujuan Nego dari Petani
+  ACCEPTED                     // Disetujui Petani & Siap Diantar / Diambil
+  REJECTED                     // Ditolak Petani
+  COMPLETED                    // Selesai
+}
+
+enum DeliveryMethod {
+  DIANTAR_PETANI
+  COD_AMBIL_SENDIRI
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ProposalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NegotiationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  username         String    @unique // Hanya huruf & angka, tanpa spasi
+  name             String
+  phone_number     String    @unique // Nomor telepon dari form registrasi (628xxx)
+  waLid            String?   @unique // WhatsApp LID (untuk linking WA)
+  role             UserRole
+  business_type    String?   // Warung Makan / Restoran | Hotel | Catering | Industri Olahan Pangan
+  password         String?   // Bcrypt hashed password for web login
+  registrationCode String?   @unique // Kode unik untuk linking WhatsApp Bot
+  is_active        Boolean   @default(true) // false = akun disuspend Superadmin
+  latitude         Float?
+  longitude        Float?
+  regionName       String?
+  created_at       DateTime  @default(now())
+
+  farm_crops    FarmCrop[]
+  orders        UmkmOrder[]
+  proposals     PriceProposal[]
+  ledger_entries ManualLedgerEntry[]
+
+  @@map("users")
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid())
+  phone     String   @unique // Nomor HP ter-sanitasi
+  code      String   // Kode OTP 6 digit
+  waToken   String?  @unique // Token untuk verifikasi via WhatsApp "Click to Chat"
+  expiresAt DateTime // Masa berlaku (5 menit)
+  createdAt DateTime @default(now())
+
+  @@map("otp_verifications")
+}
+
+model FarmCrop {
+  id           Int       @id @default(autoincrement())
+  user_id      Int
+  crop_type    String
+  area_size_m2 Float
+  latitude     Float
+  longitude    Float
+  regionName   String?
+
+  user         User          @relation(fields: [user_id], references: [id])
+  harvests     HarvestEvent[]
+
+  @@map("farm_crops")
+}
+
+model HarvestEvent {
+  id                   Int           @id @default(autoincrement())
+  crop_id              Int
+  est_harvest_date     DateTime      // Estimasi / tanggal siap panen
+  est_yield_kg         Float
+  actual_yield_kg      Float?
+  grade_quality        String?       // A | B | C
+  price_per_kg         Float?        // Harga jual yang ditetapkan petani
+  status               HarvestStatus @default(AVAILABLE)
+
+  // Pencatatan waktu presisi (WIB)
+  uploaded_at          DateTime      @default(now()) // Tanggal & jam upload otomatis sistem
+  delivery_ready_date  DateTime?     // Mulai ready diantar / diambil UMKM
+  expiry_date          DateTime?     // Masa simpan optimal / kadaluarsa (opsional)
+  updated_at           DateTime      @default(now()) @updatedAt
+
+  crop                 FarmCrop      @relation(fields: [crop_id], references: [id])
+  orders               UmkmOrder[]
+
+  @@map("harvest_events")
+}
+
+model UmkmOrder {
+  id               Int            @id @default(autoincrement())
+  umkm_user_id     Int
+  harvest_event_id Int?
+  amount_kg        Float          @default(0)
+  total_amount     Float
+  status           OrderStatus    @default(PENDING_FARMER_CONFIRMATION)
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @default(now()) @updatedAt
+
+  // Harga & Negosiasi P2P
+  price_per_kg          Float?    // Harga disepakati (normal atau hasil nego)
+  original_price_per_kg Float?    // Harga asli dari petani
+  is_nego               Boolean   @default(false)
+  nego_reason           String?   @db.Text // Alasan nego dari UMKM (opsional)
+  rejection_reason      String?   @db.Text // Alasan penolakan dari Petani
+
+  // Pengiriman
+  delivery_method  DeliveryMethod @default(DIANTAR_PETANI)
+  distance_km      Float          @default(0)
+  delivery_fee     Float?         @default(0) // Rp 0 jika COD_AMBIL_SENDIRI
+  food_total_price Float?
+  grand_total      Float?
+  payment_method   String?        @default("COD")
+  is_self_pickup   Boolean        @default(false)
+
+  umkm_user        User           @relation(fields: [umkm_user_id], references: [id])
+  harvest_event    HarvestEvent?  @relation(fields: [harvest_event_id], references: [id])
+
+  @@map("umkm_orders")
+}
+
+model PriceHistory {
+  id             Int       @id @default(autoincrement())
+  regionName     String    @default("Kabupaten Sleman")
+  commodity      String
+  farmer_price   Float
+  prev_price     Float     @default(0)
+  umkm_price     Float
+  hap_price      Float
+  trend          String    // UP | DOWN | STABLE
+  isCustomLocked Boolean   @default(false)
+  lockUntil      DateTime?
+  updated_at     DateTime  @default(now()) @updatedAt
+  created_at     DateTime  @default(now())
+
+  @@unique([regionName, commodity])
+  @@map("price_histories")
+}
+
+model PriceProposal {
+  id             Int            @id @default(autoincrement())
+  user_id        Int
+  regionName     String
+  commodity      String
+  proposed_price Float
+  reason         String?        @db.Text
+  status         ProposalStatus @default(PENDING)
+  created_at     DateTime       @default(now())
+
+  user           User           @relation(fields: [user_id], references: [id])
+
+  @@map("price_proposals")
+}
+
+model WhatsappJob {
+  id              Int       @id @default(autoincrement())
+  sender_phone    String
+  message_payload String    @db.Text
+  status          JobStatus @default(PENDING)
+  created_at      DateTime  @default(now())
+
+  @@map("whatsapp_jobs")
+}
+
+model ManualLedgerEntry {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  item_name    String
+  category     String   // Bahan Pangan Utama | Bumbu & Rempah | Operasional & Transport
+  amount_rp    Float
+  vendor_name  String?
+  entry_date   DateTime @default(now())
+  created_at   DateTime @default(now())
+
+  user         User     @relation(fields: [user_id], references: [id])
+
+  @@map("manual_ledger_entries")
+}
+
+model PriceNegotiation {
+  id              Int            @id @default(autoincrement())
+  harvest_event_id Int
+  buyer_name      String
+  buyer_phone     String
+  commodity       String
+  quantity_kg     Float
+  normal_price    Float
+  proposed_price  Float
+  reason          String?        @db.Text
+  status          NegotiationStatus @default(PENDING)
+  created_at      DateTime       @default(now())
+
+  @@map("price_negotiations")
+}
+
+model WaRegistration {
+  id           String   @id @default(uuid())
+  waLid        String   @unique
+  waJid        String?
+  step         String   @default("START") // 'START' | 'AWAITING_ROLE' | 'AWAITING_NAME' | 'AWAITING_PHONE' | 'COMPLETED'
+  pendingDraft String?  @db.Text // JSON draft panen hasil parsing AI, menunggu konfirmasi "YA"
+  phone        String?
+  name         String?
+  role         String?  // 'PETANI' | 'UMKM' | 'TENGKULAK'
+  isRegistered Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("wa_registrations")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  // ID User (jika sudah terautentikasi)
+  role        String?
+  actorPhone  String?  // No HP / LID WhatsApp
+  actorName   String?  // Nama Pengguna / Bot
+  action      String   // 'USER_REGISTERED_WA' | 'PANEN_POSTED' | 'NEGO_SUBMITTED' | 'ORDER_REJECTED' | 'LOCATION_ACTIVATED'
+  module      String   @default("SYSTEM") // 'AUTH' | 'HARVEST' | 'ORDER' | 'LOCATION' | 'PRICE_ENGINE' | 'ADMIN'
+  description String?  @db.Text // Rincian teks deskriptif
+  method      String?  // 'GET' | 'POST' | 'PUT' | 'DELETE'
+  path        String?  // Contoh: '/api/v1/procurement/checkout'
+  statusCode  Int?
+  details     String?  @db.Text // JSON string / ringkasan payload
+  ipAddress   String?  // IP Pengguna
+  userAgent   String?  // Browser / Device Info
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([module])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
