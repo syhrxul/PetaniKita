@@ -112,12 +112,11 @@ function SuperadminSidebarContent({
 export default function SuperadminLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
-  // Tutup drawer mobile jika route/tab berubah
+  // Tutup drawer mobile jika route berpindah
   useEffect(() => {
     setMobileOpen(false);
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   // Lock scroll saat mobile menu terbuka
   useEffect(() => {

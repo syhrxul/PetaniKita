@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import TopProgressBar from "@/components/ui/TopProgressBar";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "PetaniKita — Platform Rantai Pasok Pangan Hiperlokal",
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="bg-white text-slate-900 antialiased">
         <TopProgressBar />
         {children}
+        <Analytics />
       </body>
     </html>
   );
