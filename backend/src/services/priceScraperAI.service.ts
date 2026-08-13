@@ -173,7 +173,7 @@ export async function batchScrapePrices(
   commodities: string[],
   regionName: string
 ): Promise<Array<{ commodity: string; regionName: string; farmerPrice: number; umkmPrice: number; hapPrice: number; trend: string; source: string }>> {
-  const results = [];
+  const results: { commodity: string; regionName: string; farmerPrice: number; umkmPrice: number; hapPrice: number; trend: string; source: string }[] = [];
 
   for (const commodity of commodities) {
     const price = await scrapePriceAI(commodity, regionName);

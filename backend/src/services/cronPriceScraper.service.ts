@@ -129,7 +129,6 @@ export function initPriceScraperCron() {
       runDynamicMultiSourcePriceScraper();
     },
     {
-      scheduled: true,
       timezone: "Asia/Jakarta",
     }
   );

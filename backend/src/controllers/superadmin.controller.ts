@@ -292,7 +292,7 @@ export async function getPriceProposalsGrouped(_req: any, res: any) {
         const maxPrice = Math.max(...prices);
         const reasons = g.proposals.map((p) => p.reason).filter(Boolean) as string[];
 
-        let aiAnalysis = null;
+        let aiAnalysis: Awaited<ReturnType<typeof analyzePriceProposalAI>> | null = null;
         try {
           aiAnalysis = await analyzePriceProposalAI(
             g.regionName,
