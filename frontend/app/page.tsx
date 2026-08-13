@@ -1,15 +1,39 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Sprout, Store, Truck, CheckCircle2, Phone, HelpCircle, ArrowRight, LayoutDashboard } from "lucide-react";
-import { isLoggedIn, getSession, roleRedirect } from "@/lib/api";
+import {
+  Sprout,
+  Store,
+  Truck,
+  CheckCircle2,
+  HelpCircle,
+  ArrowRight,
+  LayoutDashboard,
+  MessageCircle,
+  ShoppingBag,
+  Bot,
+  Zap,
+  Bell,
+  Sparkles,
+  ShieldCheck,
+} from "lucide-react";
+import { isLoggedIn, getSession, roleRedirect, getRegionalPrices } from "@/lib/api";
 import GuideModal from "@/components/GuideModal";
+
+interface CommodityItem {
+  commodity: string;
+  farmerPrice: number;
+  umkmPrice: number;
+  trend?: string;
+}
 
 export default function HomePage() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [dashboardUrl, setDashboardUrl] = useState("/auth/login");
   const [isHydrated, setIsHydrated] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [commodities, setCommodities] = useState<CommodityItem[]>([]);
+  const [loadingCommodities, setLoadingCommodities] = useState(true);
 
   useEffect(() => {
     const user = getSession();
@@ -18,40 +42,91 @@ export default function HomePage() {
     setLoggedIn(nextLoggedIn);
     setDashboardUrl(user ? roleRedirect(user.role) : "/auth/login");
     setIsHydrated(true);
+
+    getRegionalPrices()
+      .then((res) => {
+        if (res?.prices && Array.isArray(res.prices)) {
+          const uniqueMap = new Map<string, CommodityItem>();
+          res.prices.forEach((p) => {
+            const key = (p.commodity || "").trim().toLowerCase();
+            if (key && !uniqueMap.has(key)) {
+              uniqueMap.set(key, {
+                commodity: p.commodity,
+                farmerPrice: p.farmer_price,
+                umkmPrice: p.umkm_price,
+                trend: p.trend === "UP" ? "Naik" : p.trend === "DOWN" ? "Turun" : "Stabil",
+              });
+            }
+          });
+          // Ambil 4 hingga 6 komoditas utama
+          const list = Array.from(uniqueMap.values());
+          setCommodities(list.length >= 4 ? list.slice(0, 6) : getFallbackCommodities());
+        } else {
+          setCommodities(getFallbackCommodities());
+        }
+      })
+      .catch(() => {
+        setCommodities(getFallbackCommodities());
+      })
+      .finally(() => setLoadingCommodities(false));
   }, []);
 
+  function getFallbackCommodities(): CommodityItem[] {
+    return [
+      { commodity: "Cabai Merah Keriting", farmerPrice: 32000, umkmPrice: 38000, trend: "Stabil" },
+      { commodity: "Bawang Merah", farmerPrice: 28000, umkmPrice: 34000, trend: "Naik" },
+      { commodity: "Beras Medium", farmerPrice: 13500, umkmPrice: 15000, trend: "Stabil" },
+      { commodity: "Tomat Segar", farmerPrice: 8000, umkmPrice: 11000, trend: "Turun" },
+      { commodity: "Jagung Manis", farmerPrice: 7000, umkmPrice: 9500, trend: "Stabil" },
+      { commodity: "Kentang Dieng", farmerPrice: 14000, umkmPrice: 17500, trend: "Stabil" },
+    ];
+  }
+
+  const botPhone = "62895637383173";
+  const botWaUrl = `https://wa.me/${botPhone}?text=${encodeURIComponent("Halo Bot PetaniKita! Saya ingin transaksi dan cek harga panen.")}`;
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 relative overflow-x-hidden font-sans text-slate-800">
+      {/* NAVBAR */}
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3">
-            <Sprout className="w-8 h-8 text-emerald-800" strokeWidth={2} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <Sprout className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-800" strokeWidth={2} />
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">PetaniKita</h1>
-              <p className="text-xs text-slate-500">Pertanian untuk Semua</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">PetaniKita</h1>
+              <p className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">Pertanian untuk Semua</p>
             </div>
           </Link>
 
-          <div className="flex gap-4">
+          <div className="flex gap-2 sm:gap-3 shrink-0 items-center">
+            <a
+              href={botWaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs sm:text-sm transition shadow-sm"
+            >
+              <Bot className="w-4 h-4" />
+              <span>Chat Bot WA</span>
+            </a>
             {isHydrated && loggedIn ? (
               <Link
                 href={dashboardUrl}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-800 text-white rounded-lg hover:bg-emerald-900 font-semibold text-base transition"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 bg-emerald-800 text-white rounded-lg hover:bg-emerald-900 font-semibold text-xs sm:text-base transition min-h-[40px]"
               >
-                <LayoutDashboard className="w-5 h-5" strokeWidth={2} />
+                <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2} />
                 Dashboard
               </Link>
             ) : (
               <>
                 <Link
                   href="/auth/login"
-                  className="px-6 py-2.5 text-emerald-800 border-2 border-emerald-800 rounded-lg hover:bg-emerald-50 font-semibold text-base transition"
+                  className="px-3.5 sm:px-5 py-2 text-emerald-800 border-2 border-emerald-800 rounded-lg hover:bg-emerald-50 font-semibold text-xs sm:text-base transition min-h-[40px] flex items-center justify-center"
                 >
                   Masuk
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="px-6 py-2.5 bg-emerald-800 text-white rounded-lg hover:bg-emerald-900 font-semibold text-base transition"
+                  className="px-3.5 sm:px-5 py-2 bg-emerald-800 text-white rounded-lg hover:bg-emerald-900 font-semibold text-xs sm:text-base transition min-h-[40px] flex items-center justify-center"
                 >
                   Daftar
                 </Link>
@@ -61,99 +136,208 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <section className="bg-gradient-to-b from-emerald-800 to-emerald-700 text-white py-24">
-        <div className="max-w-7xl mx-auto px-6">
+      {/* HERO SECTION - FITUR BOT WA DIUNGGULKAN */}
+      <section className="bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-700 text-white py-10 sm:py-16 md:py-20 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="max-w-3xl">
-            <h2 className="text-5xl md:text-6xl font-bold leading-tight mb-8">
-              Solusi Jual Beli Hasil Panen Langsung Tanpa Perantara
+            {/* BADGE UNGGULAN WA BOT */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-700/90 border border-emerald-500/40 rounded-full text-xs sm:text-sm font-semibold text-amber-300 mb-4 sm:mb-6 shadow-sm">
+              <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+              <span>Fitur Utama: AI WhatsApp Bot Otomatis 24/7</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-4 sm:mb-6 tracking-tight">
+              Jual Beli Panen Serba Praktis Langsung Lewat <span className="text-amber-400 underline decoration-amber-400/50">WhatsApp</span>
             </h2>
-            <p className="text-xl text-emerald-100 leading-relaxed mb-12">
-              Menghubungkan petani lokal dengan warung makan, restoran, dan hotel secara efisien. 
-              Jual hasil panen dengan harga lebih tinggi. Beli bahan baku dengan harga lebih murah.
+            <p className="text-sm sm:text-base md:text-xl text-emerald-100 leading-relaxed mb-6 sm:mb-8">
+              Tanpa ribet instal aplikasi! Cukup kirim pesan WhatsApp ke Bot AI PetaniKita untuk cek harga pasar terkini, lapor hasil panen, hingga cari pembeli UMKM terdekat secara instan.
             </p>
-            <div className="flex flex-col md:flex-row gap-6">
-              <Link href="/farmer/input"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-amber-500 text-slate-900 rounded-xl hover:bg-amber-600 font-bold text-lg transition">
-                Lapor Panen
-                <ArrowRight className="w-5 h-5" strokeWidth={2} />
-              </Link>
-              <Link href="/auth/login"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-emerald-800 rounded-xl hover:bg-slate-100 font-bold text-lg transition">
-                Beli Bahan Baku
-                <ArrowRight className="w-5 h-5" strokeWidth={2} />
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <a
+                href={botWaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-3 px-6 sm:px-8 py-3.5 sm:py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-base sm:text-lg rounded-xl shadow-xl transition min-h-[48px] group"
+              >
+                <MessageCircle className="w-6 h-6 text-slate-950 fill-current" />
+                <span>Chat Bot WhatsApp SEKARANG</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+              <Link
+                href="/farmer/input"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm sm:text-base rounded-xl transition min-h-[48px]"
+              >
+                <span>Akses Lewat Web</span>
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <h3 className="text-4xl font-bold text-slate-900 mb-4">Cara Kerja Simpel</h3>
-          <p className="text-xl text-slate-600 mb-16 leading-relaxed">
-            Tiga langkah sederhana untuk mengoptimalkan jual beli hasil pertanian Anda.
-          </p>
+      {/* SHOWCASE WA BOT AI */}
+      <section className="py-10 sm:py-14 bg-emerald-50/60 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-200 text-emerald-900 rounded-full text-xs font-semibold mb-2">
+              <Bot className="w-4 h-4 text-emerald-800" /> WhatsApp Bot AI PetaniKita
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Keunggulan WhatsApp Bot AI</h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">Solusi praktis bertransaksi pertanian tanpa hambatan aplikasi.</p>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-md border border-slate-200 hover:shadow-lg transition">
-              <div className="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center mb-6">
-                <Sprout className="w-8 h-8 text-emerald-800" strokeWidth={2} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-emerald-100 shadow-sm">
+              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mb-4 text-emerald-800">
+                <Zap className="w-5 h-5" />
               </div>
-              <h4 className="text-2xl font-bold text-slate-900 mb-4">Petani</h4>
-              <p className="text-lg text-slate-700 leading-relaxed">
-                Cukup isi jumlah panen dan lokasi lahan Anda. Sistem kami langsung mencari pembeli 
-                terdekat yang membutuhkan produk Anda dengan harga terbaik.
+              <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-1.5">Cek Harga Realtime AI</h4>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Ketik nama komoditas & lokasi via WhatsApp, Bot AI langsung berikan acuan harga pasar terkini.
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-md border border-slate-200 hover:shadow-lg transition">
-              <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
-                <Store className="w-8 h-8 text-blue-800" strokeWidth={2} />
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-emerald-100 shadow-sm">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mb-4 text-amber-800">
+                <Bell className="w-5 h-5" />
               </div>
-              <h4 className="text-2xl font-bold text-slate-900 mb-4">UMKM & Restoran</h4>
-              <p className="text-lg text-slate-700 leading-relaxed">
-                Dapatkan bahan baku berkualitas langsung dari petani terdekat dengan harga lebih 
-                murah. Tidak perlu lagi ke pasar atau distributor.
+              <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-1.5">Notifikasi Pesanan Langsung</h4>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Setiap kali UMKM memesan panen Anda, pesan WhatsApp notifikasi otomatis langsung masuk ke nomor HP Anda.
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-md border border-slate-200 hover:shadow-lg transition">
-              <div className="w-14 h-14 bg-amber-100 rounded-xl flex items-center justify-center mb-6">
-                <Truck className="w-8 h-8 text-amber-800" strokeWidth={2} />
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-emerald-100 shadow-sm">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-800">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-              <h4 className="text-2xl font-bold text-slate-900 mb-4">Pengiriman Hemat</h4>
-              <p className="text-lg text-slate-700 leading-relaxed">
-                Jarak dihitung otomatis ke pembeli terdekat agar biaya pengiriman lebih hemat. 
-                Hasil pertanian sampai lebih segar, untung semua.
+              <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-1.5">Ramah Semua Jenis HP</h4>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Tidak makan memori HP atau kuota besar. Dapat dipakai di HP jadul maupun smartphone terbaru.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <h3 className="text-4xl font-bold text-slate-900 mb-4">Keunggulan PetaniKita</h3>
-          <p className="text-xl text-slate-600 mb-16 leading-relaxed">
-            Bergabunglah dengan ribuan pengguna yang sudah merasakan manfaatnya.
+      {/* KOMODITAS YANG TERSEDIA (DITAMPILKAN 4 - 6 KOMODITAS SAJA) */}
+      <section className="py-10 sm:py-16 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="mb-6 sm:mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold mb-2">
+              <ShoppingBag className="w-3.5 h-3.5" /> Hasil Panen Mitra
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">Komoditas yang Tersedia</h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">Menampilkan 4-6 komoditas utama hasil panen petani mitra siap pesan.</p>
+          </div>
+
+          {loadingCommodities ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-32 bg-slate-100 animate-pulse rounded-xl border border-slate-200" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {commodities.map((item, idx) => (
+                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-emerald-300 transition flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-800 shrink-0">
+                        <Sprout className="w-5 h-5" />
+                      </div>
+                      {item.trend && (
+                        <span className="text-[11px] px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-semibold rounded-full">
+                          {item.trend}
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-2">{item.commodity}</h4>
+                  </div>
+                  <div className="space-y-1 text-xs sm:text-sm pt-2 border-t border-slate-200/60">
+                    <div className="flex justify-between text-slate-700">
+                      <span>Harga Petani:</span>
+                      <span className="font-bold text-emerald-800">Rp {item.farmerPrice?.toLocaleString("id-ID")}/kg</span>
+                    </div>
+                    {item.umkmPrice > 0 && (
+                      <div className="flex justify-between text-slate-500 text-[11px]">
+                        <span>Estimasi UMKM:</span>
+                        <span>Rp {item.umkmPrice?.toLocaleString("id-ID")}/kg</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CARA KERJA */}
+      <section className="py-10 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Cara Kerja Simpel</h3>
+          <p className="text-xs sm:text-base text-slate-600 mb-8 leading-relaxed">
+            Tiga langkah mudah menghubungkan langsung Petani dan Pembeli UMKM.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200">
+              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mb-4 shrink-0">
+                <Sprout className="w-5 h-5 text-emerald-800" strokeWidth={2} />
+              </div>
+              <h4 className="text-lg font-bold text-slate-900 mb-2">1. Petani Lapor Panen</h4>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                Isi jumlah panen via WA Bot atau Web. Sistem otomatis mencari pembeli terdekat.
+              </p>
+            </div>
+
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4 shrink-0">
+                <Store className="w-5 h-5 text-blue-800" strokeWidth={2} />
+              </div>
+              <h4 className="text-lg font-bold text-slate-900 mb-2">2. UMKM Pesan Langsung</h4>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                UMKM mendapatkan bahan baku segar langsung dari petani lokal dengan harga transparan.
+              </p>
+            </div>
+
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mb-4 shrink-0">
+                <Truck className="w-5 h-5 text-amber-800" strokeWidth={2} />
+              </div>
+              <h4 className="text-lg font-bold text-slate-900 mb-2">3. Pengiriman Hemat</h4>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                Lokasi dihitung otomatis untuk menekan ongkir agar hasil panen cepat sampai dan tetap segar.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* KEUNGGULAN SISTEM */}
+      <section className="py-10 sm:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Keunggulan PetaniKita</h3>
+          <p className="text-xs sm:text-base text-slate-600 mb-8 leading-relaxed">
+            Fitur dirancang ramah penggunaan untuk semua perangkat.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {[
-              { title: "Harga Transparan & Pasti", desc: "Tidak ada negosiasi bertele-tele. Harga sudah jelas sebelum transaksi." },
-              { title: "Tanpa Aplikasi Rumit", desc: "Gunakan melalui website di browser dan aplikasi chat bot whatsApp. Tidak perlu download aplikasi." },
-              { title: "Pembayaran Aman & Terjamin", desc: "Sistem escrow memastikan uang aman hingga barang diterima dengan baik." },
-              { title: "Membantu Ekonomi Lokal", desc: "Dukungan penuh untuk UMKM lokal dan petani di sekitar Anda." },
-              { title: "Prediksi Kebutuhan AI", desc: "Tahu berapa banyak barang yang dibutuhkan setiap hari tanpa khawatir kelebihan stok." },
-              { title: "Hubungan Langsung Petani-Pembeli", desc: "Tidak ada perantara. Semua keuntungan langsung ke petani dan pembeli." },
+              { title: "Diutamakan via Bot WA", desc: "Praktis lapor panen, cek harga, dan terima notifikasi via WhatsApp." },
+              { title: "Harga Transparan & Jelas", desc: "Harga langsung tertera tanpa perlu negosiasi bertele-tele." },
+              { title: "Tanpa Aplikasi Berat", desc: "Website & WhatsApp Bot ramah memori di semua tipe HP." },
+              { title: "Pembayaran Escrow Aman", desc: "Uang aman sampai barang diterima oleh pembeli." },
+              { title: "Pemberdayaan Petani Lokal", desc: "Meningkatkan keuntungan petani langsung tanpa potong perantara." },
+              { title: "Teknologi Prediksi AI", desc: "Perkiraan tren harga komoditas terkini menggunakan kecerdasan buatan." },
             ].map((benefit, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="flex-shrink-0 mt-1">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-800" strokeWidth={2} />
+              <div key={i} className="flex gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-800" strokeWidth={2} />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-slate-900 mb-2">{benefit.title}</h4>
-                  <p className="text-lg text-slate-700 leading-relaxed">{benefit.desc}</p>
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900 mb-0.5">{benefit.title}</h4>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{benefit.desc}</p>
                 </div>
               </div>
             ))}
@@ -161,35 +345,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="bg-blue-50 border-l-4 border-blue-800 p-10 rounded-xl">
-            <div className="flex gap-6">
-              <div className="flex-shrink-0">
-                <HelpCircle className="w-10 h-10 text-blue-800 flex-shrink-0" strokeWidth={2} />
+      {/* SECTION BANTUAN */}
+      <section className="py-10 sm:py-14 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="bg-emerald-900 text-white p-6 sm:p-8 rounded-2xl shadow-lg relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start relative z-10">
+              <div className="shrink-0 w-10 h-10 bg-emerald-800 rounded-lg flex items-center justify-center text-emerald-300">
+                <Bot className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <h4 className="text-2xl font-bold text-slate-900 mb-3">Butuh Bantuan?</h4>
-                <p className="text-lg text-slate-700 leading-relaxed mb-6">
-                  Jika Anda merasa kesulitan menggunakan website ini, kami siap membantu. 
-                  Tim kami telah terlatih khusus untuk mendampingi pengguna berusia lanjut.
+                <h4 className="text-lg sm:text-xl font-bold mb-2">Langsung Chat Bot WhatsApp Sekarang</h4>
+                <p className="text-xs sm:text-sm text-emerald-100 leading-relaxed mb-5">
+                  Cukup kirim pesan ke nomor WA Bot kami (0895-6373-83173) untuk langsung cek harga dan transaksi.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <a
-                    href="https://wa.me/6281229411387?text=Halo%20Tim%20PetaniKita,%20saya%20butuh%20bantuan%20penggunaan%20website"
+                    href={botWaUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-blue-800 text-white rounded-lg hover:bg-blue-900 font-semibold text-base transition"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs sm:text-sm transition min-h-[44px]"
                   >
-                    <Phone className="w-5 h-5" strokeWidth={2} />
-                    Hubungi Bantuan
+                    <MessageCircle className="w-4 h-4 fill-current" />
+                    Chat Bot WA Sekarang
                   </a>
                   <button
                     onClick={() => setIsGuideOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 px-8 py-3 border-2 border-blue-800 text-blue-800 rounded-lg hover:bg-blue-50 font-semibold text-base transition"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 border border-emerald-400/40 text-emerald-100 hover:bg-emerald-800 rounded-xl font-semibold text-xs sm:text-sm transition min-h-[44px]"
                   >
-                    Baca Panduan Lengkap
-                    <ArrowRight className="w-5 h-5" strokeWidth={2} />
+                    <HelpCircle className="w-4 h-4" />
+                    Baca Panduan
                   </button>
                 </div>
               </div>
@@ -197,6 +381,18 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* FLOATING BOT WA BUTTON (RESPONSIF & PERSISTEN DI SEMUA DEVICE) */}
+      <a
+        href={botWaUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat WhatsApp Bot AI"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-4 py-3 rounded-full shadow-2xl transition hover:scale-105 border-2 border-white ring-2 ring-emerald-500/40"
+      >
+        <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse shrink-0 fill-current" />
+        <span className="font-extrabold text-xs sm:text-sm">Chat Bot WA AI</span>
+      </a>
 
       <GuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
     </div>
