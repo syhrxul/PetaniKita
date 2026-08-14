@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import TopProgressBar from "@/components/ui/TopProgressBar";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "PetaniKita — Platform Rantai Pasok Pangan Hiperlokal",
@@ -39,6 +40,7 @@ export default function RootLayout({
         <TopProgressBar />
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
