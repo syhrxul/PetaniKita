@@ -338,13 +338,13 @@ export default function SuperadminDashboardPage() {
             ) : (
               <div className="space-y-2">
                 {waLogs.map((l) => (
-                  <div key={l.id} className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex justify-between items-center text-xs">
-                    <div>
-                      <span className="font-extrabold text-slate-900">{l.recipientPhone}</span>
+                  <div key={l.id} className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex justify-between items-center text-xs gap-2">
+                    <div className="min-w-0">
+                      <span className="font-extrabold text-slate-900" style={{ overflowWrap: 'anywhere' }}>{l.recipientPhone}</span>
                       <span className="ml-2 font-mono text-[10px] bg-slate-200 px-2 py-0.5 rounded font-bold text-slate-800">{l.messageType}</span>
-                      <p className="text-[11px] text-slate-600 mt-0.5 font-medium">{l.contentSnippet}</p>
+                      <p className="text-[11px] text-slate-600 mt-0.5 font-medium break-words">{l.contentSnippet}</p>
                     </div>
-                    <span className={`font-extrabold text-[10px] px-2.5 py-1 rounded-full ${l.status === 'SENT' ? 'bg-emerald-100 text-emerald-950' : 'bg-rose-100 text-rose-950'}`}>
+                    <span className={`font-extrabold text-[10px] px-2.5 py-1 rounded-full shrink-0 ${l.status === 'SENT' ? 'bg-emerald-100 text-emerald-950' : 'bg-rose-100 text-rose-950'}`}>
                       {l.status}
                     </span>
                   </div>
@@ -363,10 +363,10 @@ export default function SuperadminDashboardPage() {
             <h2 className="text-base font-black text-slate-900">Daftar Harga Acuan Regional &amp; HAP</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {regionalPrices.map((p) => (
-                <div key={p.id} className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">{p.region}</span>
-                  <p className="font-black text-slate-900 text-sm">{p.commodity}</p>
-                  <p className="text-xs font-black text-emerald-800">Rp {Number(p.farmerPrice).toLocaleString()}/Kg <span className="text-[10px] text-slate-500 font-normal">(HAP: Rp {Number(p.hapPrice).toLocaleString()})</span></p>
+                <div key={p.id} className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1 min-w-0">
+                  <span className="text-[10px] font-black text-slate-400 uppercase block truncate">{p.region}</span>
+                  <p className="font-black text-slate-900 text-sm truncate">{p.commodity}</p>
+                  <p className="text-xs font-black text-emerald-800 break-words">Rp {Number(p.farmerPrice).toLocaleString()}/Kg <span className="text-[10px] text-slate-500 font-normal">(HAP: Rp {Number(p.hapPrice).toLocaleString()})</span></p>
                 </div>
               ))}
             </div>
@@ -402,13 +402,13 @@ export default function SuperadminDashboardPage() {
           <h2 className="text-base font-black text-slate-900">Audit Log Aktivitas Sistem</h2>
           <div className="space-y-2">
             {auditLogs.map((log) => (
-              <div key={log.id} className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex justify-between items-center text-xs">
-                <div>
+              <div key={log.id} className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex justify-between items-center text-xs gap-2">
+                <div className="min-w-0">
                   <span className="font-extrabold text-slate-900">{log.user?.name || 'Sistem'}</span>
                   <span className="ml-2 font-mono text-slate-600 font-bold">[{log.action}]</span>
-                  <p className="text-[11px] text-slate-600 mt-0.5 font-medium">{log.description}</p>
+                  <p className="text-[11px] text-slate-600 mt-0.5 font-medium break-words">{log.description}</p>
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono font-bold">{new Date(log.createdAt).toLocaleString()}</span>
+                <span className="text-[10px] text-slate-500 font-mono font-bold shrink-0 whitespace-nowrap">{new Date(log.createdAt).toLocaleString()}</span>
               </div>
             ))}
           </div>

@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import { SkeletonGrid } from "@/components/ui/SkeletonCard";
 import { useRouter } from "next/navigation";
-import { getProcurementDashboardStats, getProcurementRecommendations, getProcurementSuppliers, checkoutProcurementOrder, getSession } from "@/lib/api";
-import { ShoppingBag, Lock, TrendingDown, Wallet, Sparkles, MapPin, RefreshCw, CheckCircle2, AlertCircle, X, CreditCard, Clock, Truck, Store, Receipt, Calculator, MessageCircle } from "lucide-react";
+import { getProcurementDashboardStats, getProcurementRecommendations, getProcurementSuppliers, checkoutProcurementOrder, getSession, getCurrentUser, getPricesByRegion } from "@/lib/api";
+import { formatCompactRupiah, formatRupiah } from "@/lib/format";
+import { ShoppingBag, Lock, TrendingDown, Wallet, Sparkles, MapPin, RefreshCw, CheckCircle2, AlertCircle, X, CreditCard, Clock, Truck, Store, Receipt, Calculator, MessageCircle, Search, TrendingUp } from "lucide-react";
 
 type ProcurementMethod = "DIANTAR_PETANI" | "COD_AMBIL_SENDIRI";
 
@@ -35,6 +36,18 @@ export default function ProcurementPage() {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Regional Market Prices State
+  const [regionPrices, setRegionPrices] = useState<Array<{
+    commodity: string;
+    farmerPrice: number;
+    umkmPrice: number;
+    hapPrice: number;
+    trend: string;
+  }> | null>(null);
+  const [regionName, setRegionName] = useState("");
+  const [regionalLoading, setRegionalLoading] = useState(true);
+  const [priceSearch, setPriceSearch] = useState("");
 
   // Checkout Modal State
   const [selectedSupplier, setSelectedSupplier] = useState<any | null>(null);
@@ -69,8 +82,27 @@ export default function ProcurementPage() {
       });
   }
 
+  function loadRegionalPrices() {
+    setRegionalLoading(true);
+    getCurrentUser()
+      .then(u => {
+        const region = u.regionName || "";
+        setRegionName(region);
+        return region ? getPricesByRegion(region) : null;
+      })
+      .then(res => {
+        if (res && Array.isArray(res.data)) {
+          setRegionPrices(res.data);
+        } else {
+          setRegionPrices(null);
+        }
+      })      .catch(() => setRegionPrices(null))
+      .finally(() => setRegionalLoading(false));
+  }
+
   useEffect(() => {
     loadWorkspaceData(false);
+    loadRegionalPrices();
     const interval = setInterval(() => loadWorkspaceData(true), 5000);
     return () => clearInterval(interval);
   }, []);
@@ -137,6 +169,9 @@ export default function ProcurementPage() {
   }
 
   const foodPrice = (parseFloat(inputQuantityKg) || 0) * (selectedSupplier?.pricePerKg ?? 0);
+  const filteredPrices = (regionPrices || []).filter(p =>
+    priceSearch.trim() === "" || p.commodity.toLowerCase().includes(priceSearch.trim().toLowerCase())
+  );
   const effectivePricePerKg = enableNego && Number(negoPrice) > 0
     ? Number(negoPrice)
     : (selectedSupplier?.pricePerKg ?? 0);
@@ -149,9 +184,9 @@ export default function ProcurementPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-600 to-emerald-700 text-white rounded-2xl p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Pengadaan Bahan Baku &amp; Auto-Restock</h1>
-          <p className="text-teal-100 text-lg">Powered by Prophet AI Forecasting &amp; Sistem Pencocokan Jarak Otomatis</p>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 truncate">Pengadaan Bahan Baku &amp; Auto-Restock</h1>
+          <p className="text-teal-100 text-sm sm:text-lg truncate">Powered by Prophet AI Forecasting &amp; Sistem Pencocokan Jarak Otomatis</p>
         </div>
         <button
           onClick={() => loadWorkspaceData(false)}
@@ -165,49 +200,129 @@ export default function ProcurementPage() {
 
       {/* 4 Dynamic Metric Cards */}
       <div className="grid md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6">
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 min-w-0">
           <div className="flex items-start justify-between mb-4">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-slate-600 text-sm font-medium mb-1">Estimasi Kebutuhan Minggu Ini</p>
-              <p className="text-3xl font-bold text-slate-900">{stats?.totalKgThisWeek ?? stats?.weeklyDemandKg ?? 0} Kg</p>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">{stats?.totalKgThisWeek ?? stats?.weeklyDemandKg ?? 0} Kg</p>
             </div>
-            <ShoppingBag className="w-8 h-8 text-teal-600" strokeWidth={2} />
+            <ShoppingBag className="w-8 h-8 text-teal-600 shrink-0" strokeWidth={2} />
           </div>
           <p className="text-xs text-slate-500 font-medium">Berdasarkan rekap otomatis</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6">
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 min-w-0">
           <div className="flex items-start justify-between mb-4">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-slate-600 text-sm font-medium mb-1">Pesanan Dikunci DP (Escrow)</p>
-              <p className="text-3xl font-bold text-slate-900">{stats?.activeOrdersCount ?? stats?.activeEscrowOrders ?? 0} Order</p>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">{stats?.activeOrdersCount ?? stats?.activeEscrowOrders ?? 0} Order</p>
             </div>
-            <Lock className="w-8 h-8 text-emerald-600" strokeWidth={2} />
+            <Lock className="w-8 h-8 text-emerald-600 shrink-0" strokeWidth={2} />
           </div>
           <p className="text-xs text-slate-500 font-medium">Status Escrow Aktif</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6">
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 min-w-0">
           <div className="flex items-start justify-between mb-4">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-slate-600 text-sm font-medium mb-1">Total Hemat Procurement</p>
-              <p className="text-3xl font-bold text-slate-900">Rp {(stats?.totalSaved ?? stats?.totalCostSavings ?? 0).toLocaleString("id-ID")}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">{formatCompactRupiah(stats?.totalSaved ?? stats?.totalCostSavings ?? 0)}</p>
             </div>
-            <TrendingDown className="w-8 h-8 text-emerald-600" strokeWidth={2} />
+            <TrendingDown className="w-8 h-8 text-emerald-600 shrink-0" strokeWidth={2} />
           </div>
           <p className="text-xs text-slate-500 font-medium">vs Harga Distributor Pasar</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6">
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 min-w-0">
           <div className="flex items-start justify-between mb-4">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-slate-600 text-sm font-medium mb-1">Pengeluaran Kas Bulan Ini</p>
-              <p className="text-3xl font-bold text-slate-900">Rp {(stats?.totalSpentThisMonth ?? stats?.monthlyExpenses ?? 0).toLocaleString("id-ID")}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">{formatCompactRupiah(stats?.totalSpentThisMonth ?? stats?.monthlyExpenses ?? 0)}</p>
             </div>
-            <Wallet className="w-8 h-8 text-slate-600" strokeWidth={2} />
+            <Wallet className="w-8 h-8 text-slate-600 shrink-0" strokeWidth={2} />
           </div>
           <p className="text-xs text-slate-500 font-medium">Pengeluaran terdata</p>
         </div>
+      </div>
+
+      {/* Regional Market Prices Widget */}
+      <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl font-bold text-slate-900">Harga Pasar di Daerah Anda</h2>
+              {regionName && (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full">
+                  <MapPin className="w-3.5 h-3.5" strokeWidth={2} />
+                  {regionName}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-500 mt-1">
+              Acuan harga petani &amp; UMKM terkini di wilayah Anda. Cari komoditas untuk cek harga.
+            </p>
+          </div>
+
+          <div className="relative w-full sm:w-72 shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" strokeWidth={2} />
+            <input
+              type="text"
+              value={priceSearch}
+              onChange={e => setPriceSearch(e.target.value)}
+              placeholder="Cari komoditas..."
+              className="w-full border border-slate-300 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
+            />
+          </div>
+        </div>
+
+        {regionalLoading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-28 bg-slate-100 animate-pulse rounded-xl border border-slate-200" />
+            ))}
+          </div>
+        ) : !regionPrices || regionPrices.length === 0 ? (
+          <div className="bg-slate-50 rounded-xl border border-slate-200 p-8 text-center text-slate-600 text-sm font-medium">
+            <AlertCircle className="w-7 h-7 text-amber-600 mx-auto mb-2" strokeWidth={2} />
+            Belum ada data harga pasar untuk wilayah Anda.
+          </div>
+        ) : filteredPrices.length === 0 ? (
+          <div className="bg-slate-50 rounded-xl border border-slate-200 p-8 text-center text-slate-600 text-sm font-medium">
+            Komoditas &quot;{priceSearch}&quot; tidak ditemukan di {regionName || "wilayah Anda"}.
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredPrices.map((p, idx) => {
+              const isUp = p.trend === "UP";
+              const isDown = p.trend === "DOWN";
+              return (
+                <div key={`${p.commodity}-${idx}`} className="bg-slate-50 rounded-xl border border-slate-200/80 p-4 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <h4 className="font-bold text-slate-900 min-w-0 truncate">{p.commodity}</h4>
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                      isUp ? "bg-rose-100 text-rose-700" : isDown ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"
+                    }`}>
+                      {isUp ? <TrendingUp className="w-3 h-3" strokeWidth={2.5} /> : isDown ? <TrendingDown className="w-3 h-3" strokeWidth={2.5} /> : null}
+                      {p.trend === "STABLE" ? "Stabil" : p.trend}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="min-w-0">
+                      <p className="text-xs text-slate-500">Harga Petani</p>
+                      <p className="font-bold text-emerald-700 truncate">{formatRupiah(p.farmerPrice)}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-slate-500">Harga UMKM</p>
+                      <p className="font-bold text-slate-900 truncate">{formatRupiah(p.umkmPrice)}</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-200/70 truncate">HAP: {formatRupiah(p.hapPrice)} / Kg</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Forecast Banner - Prophet ML & Cold-Start Logic */}
@@ -232,7 +347,7 @@ export default function ProcurementPage() {
             </div>
             <div className="text-right">
               <p className="text-xs text-slate-600">Status Pengumpulan</p>
-              <p className="text-xl font-bold text-emerald-400">
+              <p className="text-xl font-bold text-emerald-400 truncate">
                 {stats?.aiStatus?.daysActive || 1} / 3 Hari
               </p>
             </div>
@@ -255,9 +370,9 @@ export default function ProcurementPage() {
               {recommendations.map((item, i) => (
                 <div key={i} className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4">
                   <p className="text-sm text-slate-300 mb-1">{item.commodityName}</p>
-                  <p className="text-3xl font-bold text-white mb-2">{item.requiredKg || item.predictedKg || 10} Kg</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600">Deadline: {item.deadline}</span>
+                  <p className="text-2xl sm:text-3xl font-bold text-white mb-2 truncate">{item.requiredKg || item.predictedKg || 10} Kg</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-slate-600 min-w-0 truncate">Deadline: {item.deadline}</span>
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
                       {item.priority || "Normal"}
                     </span>
@@ -286,9 +401,9 @@ export default function ProcurementPage() {
               {recommendations.map((item, i) => (
                 <div key={i} className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4">
                   <p className="text-sm text-slate-300 mb-1">{item.commodityName}</p>
-                  <p className="text-3xl font-bold text-white mb-2">{item.requiredKg || item.predictedKg} Kg</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600">Deadline: {item.deadline}</span>
+                  <p className="text-2xl sm:text-3xl font-bold text-white mb-2 truncate">{item.requiredKg || item.predictedKg} Kg</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-slate-600 min-w-0 truncate">Deadline: {item.deadline}</span>
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-md ${
                       item.priority === "Urgent" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                     }`}>
@@ -312,9 +427,9 @@ export default function ProcurementPage() {
 
       {/* Dynamic Supplier Catalog Grid */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-bold text-slate-900">Rekomendasi Supplier Terdekat (&lt; 25 km)</h3>
-          <span className="text-xs font-semibold px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full">
+        <div className="flex justify-between items-center gap-2">
+          <h3 className="text-lg sm:text-2xl font-bold text-slate-900 min-w-0 truncate">Rekomendasi Supplier Terdekat (&lt; 25 km)</h3>
+          <span className="text-xs font-semibold px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full shrink-0">
             Calculated by Distance Engine
           </span>
         </div>
@@ -331,14 +446,14 @@ export default function ProcurementPage() {
             {suppliers.map(s => (
               <div key={s.harvestId} className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 flex flex-col justify-between space-y-6">
                 <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
+                  <div className="flex justify-between items-start mb-2 gap-3">
+                    <div className="flex-1 min-w-0">
                       {s.uploadedAt && (
                         <span className="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-md inline-block mb-1.5">
                           Diupload: {wibDateTime(s.uploadedAt)}
                         </span>
                       )}
-                      <h4 className="text-xl font-bold text-slate-900">{s.farmerName}</h4>
+                      <h4 className="text-xl font-bold text-slate-900 truncate">{s.farmerName}</h4>
                       <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2} />
                         {s.regionName}
@@ -352,13 +467,13 @@ export default function ProcurementPage() {
                   <p className="text-sm font-medium text-slate-700 mt-3">Komoditas: {s.commodities}</p>
 
                   <div className="bg-slate-50 rounded-xl p-4 mt-4 border border-slate-200/60 grid grid-cols-2 gap-4">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-slate-500 mb-1">Harga per Kg</p>
-                      <p className="text-xl font-bold text-slate-900">Rp {s.pricePerKg.toLocaleString("id-ID")}</p>
+                      <p className="text-xl font-bold text-slate-900 truncate">Rp {s.pricePerKg.toLocaleString("id-ID")}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-slate-500 mb-1">Stok Tersedia</p>
-                      <p className="text-xl font-bold text-emerald-700">{s.availableYieldKg} Kg</p>
+                      <p className="text-xl font-bold text-emerald-700 truncate">{s.availableYieldKg} Kg</p>
                     </div>
                   </div>
 
@@ -425,9 +540,9 @@ export default function ProcurementPage() {
                 <label className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-2">
                   Komoditas &amp; Harga
                 </label>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-                  <span className="font-bold text-slate-900">{selectedSupplier.commodities}</span>
-                  <span className="font-bold text-emerald-700">Rp {selectedSupplier.pricePerKg.toLocaleString("id-ID")} / Kg</span>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center gap-2">
+                  <span className="font-bold text-slate-900 min-w-0 truncate">{selectedSupplier.commodities}</span>
+                  <span className="font-bold text-emerald-700 shrink-0 truncate">Rp {selectedSupplier.pricePerKg.toLocaleString("id-ID")} / Kg</span>
                 </div>
               </div>
 
@@ -579,7 +694,7 @@ export default function ProcurementPage() {
               {priceDisplayMode === "ALL_IN" ? (
                 <div className="p-4 bg-slate-900 text-white rounded-xl">
                   <div className="flex justify-between items-center">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs text-slate-300 font-medium">
                         {procurementMethod === "COD_AMBIL_SENDIRI" ? "Total Pembayaran (COD di Ladang)" : "Total All-In (Termasuk Ongkir Petani)"}
                       </p>
@@ -587,7 +702,7 @@ export default function ProcurementPage() {
                         {procurementMethod === "COD_AMBIL_SENDIRI" ? "Bayar langsung ke petani di ladang" : "Dibayar langsung ke petani saat barang tiba"}
                       </p>
                     </div>
-                    <span className="text-xl font-bold text-emerald-400">
+                    <span className="text-xl font-bold text-emerald-400 text-right truncate">
                       Rp {totalPrice.toLocaleString("id-ID")}
                     </span>
                   </div>
@@ -595,19 +710,19 @@ export default function ProcurementPage() {
               ) : (
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                   <p className="text-xs font-semibold text-slate-800 uppercase tracking-wider mb-2">Rincian Transparan</p>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">Harga Bahan Pangan ({inputQuantityKg || 0} Kg)</span>
-                    <span className="font-semibold text-slate-900">Rp {foodPrice.toLocaleString("id-ID")}</span>
+                  <div className="flex justify-between items-center text-sm gap-2">
+                    <span className="text-slate-600 min-w-0 truncate">Harga Bahan Pangan ({inputQuantityKg || 0} Kg)</span>
+                    <span className="font-semibold text-slate-900 shrink-0 truncate">Rp {foodPrice.toLocaleString("id-ID")}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">Ongkir Antar Petani</span>
-                    <span className={`font-semibold ${freightCost === 0 ? "text-emerald-600" : "text-slate-900"}`}>
+                  <div className="flex justify-between items-center text-sm gap-2">
+                    <span className="text-slate-600 min-w-0 truncate">Ongkir Antar Petani</span>
+                    <span className={`font-semibold shrink-0 truncate ${freightCost === 0 ? "text-emerald-600" : "text-slate-900"}`}>
                       {procurementMethod === "COD_AMBIL_SENDIRI" ? "Rp 0 (Ambil Sendiri)" : `Rp ${freightCost.toLocaleString("id-ID")}`}
                     </span>
                   </div>
-                  <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
-                    <span className="font-bold text-slate-900 text-sm">Total</span>
-                    <span className="font-bold text-emerald-700 text-base">Rp {totalPrice.toLocaleString("id-ID")}</span>
+                  <div className="border-t border-slate-200 pt-2 flex justify-between items-center gap-2">
+                    <span className="font-bold text-slate-900 text-sm min-w-0 truncate">Total</span>
+                    <span className="font-bold text-emerald-700 text-base shrink-0 truncate">Rp {totalPrice.toLocaleString("id-ID")}</span>
                   </div>
                   <p className="text-[10px] text-slate-600 pt-1">
                     {procurementMethod === "COD_AMBIL_SENDIRI"

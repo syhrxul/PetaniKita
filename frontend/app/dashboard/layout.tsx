@@ -53,11 +53,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <ResponsiveSidebar
         items={navItems}
         roleLabel={role}
-        badgeLabel={role === "UMKM" ? "UMKM / RESTO" : "SUPERADMIN"}
         userName={username}
         userSubtitle={role === "UMKM" ? "Mitra Terverifikasi" : "Administrator"}
         onLogout={logout}
-        theme="slate"
       />
 
       <main className="md:pl-64 pt-16 md:pt-0">

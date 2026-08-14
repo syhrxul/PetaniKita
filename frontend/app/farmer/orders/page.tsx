@@ -113,16 +113,16 @@ export default function FarmerOrdersPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Kelola Pesanan Langsung</h1>
-          <p className="text-slate-600 text-base">
+      <div className="flex justify-between items-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200 gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 truncate">Kelola Pesanan Langsung</h1>
+          <p className="text-slate-600 text-base truncate">
             Pesanan langsung dari UMKM Kuliner. Setujui atau tolak dengan alasan yang jelas.
           </p>
         </div>
         <button
           onClick={loadOrders}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition"
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition shrink-0"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} strokeWidth={2} />
           Refresh
@@ -177,21 +177,21 @@ export default function FarmerOrdersPage() {
 
               {/* Detail */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm bg-slate-50 rounded-xl p-4 border border-slate-100">
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-500">Komoditas</p>
-                  <p className="font-semibold text-slate-900">{o.commodity}</p>
+                  <p className="font-semibold text-slate-900 truncate">{o.commodity}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-500">Kuantitas</p>
                   <p className="font-semibold text-slate-900">{o.kg} Kg</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-500">Harga / Kg</p>
-                  <p className="font-semibold text-slate-900">{rupiah(o.pricePerKg ?? 0)}</p>
+                  <p className="font-semibold text-slate-900 truncate">{rupiah(o.pricePerKg ?? 0)}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-500">Pengiriman</p>
-                  <p className="font-semibold text-slate-900 inline-flex items-center gap-1">
+                  <p className="font-semibold text-slate-900 inline-flex items-center gap-1 truncate">
                     {o.deliveryMethod === "COD_AMBIL_SENDIRI" ? (
                       <>
                         <Store className="w-3.5 h-3.5" /> Diambil UMKM

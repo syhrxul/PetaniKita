@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { isLoggedIn, getSession, roleRedirect, getRegionalPrices } from "@/lib/api";
 import GuideModal from "@/components/GuideModal";
+import { formatRupiah } from "@/lib/format";
 
 interface CommodityItem {
   commodity: string;
@@ -91,11 +92,12 @@ export default function HomePage() {
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center gap-2">
           <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <Sprout className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-800" strokeWidth={2} />
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">PetaniKita</h1>
-              <p className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">Pertanian untuk Semua</p>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/petani kita logo.svg"
+              alt="PetaniKita"
+              className="h-7 w-auto sm:h-9"
+            />
           </Link>
 
           <div className="flex gap-2 sm:gap-3 shrink-0 items-center">
@@ -239,29 +241,29 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {commodities.map((item, idx) => (
-                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-emerald-300 transition flex flex-col justify-between">
+                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-emerald-300 transition flex flex-col justify-between min-w-0">
                   <div>
                     <div className="flex justify-between items-center mb-3">
                       <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-800 shrink-0">
                         <Sprout className="w-5 h-5" />
                       </div>
                       {item.trend && (
-                        <span className="text-[11px] px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-semibold rounded-full">
+                        <span className="text-[11px] px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-semibold rounded-full shrink-0">
                           {item.trend}
                         </span>
                       )}
                     </div>
-                    <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-2">{item.commodity}</h4>
+                    <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-2 truncate">{item.commodity}</h4>
                   </div>
                   <div className="space-y-1 text-xs sm:text-sm pt-2 border-t border-slate-200/60">
-                    <div className="flex justify-between text-slate-700">
-                      <span>Harga Petani:</span>
-                      <span className="font-bold text-emerald-800">Rp {item.farmerPrice?.toLocaleString("id-ID")}/kg</span>
+                    <div className="flex justify-between text-slate-700 gap-2">
+                      <span className="min-w-0 truncate">Harga Petani:</span>
+                      <span className="font-bold text-emerald-800 shrink-0 whitespace-nowrap">{formatRupiah(item.farmerPrice)}/kg</span>
                     </div>
                     {item.umkmPrice > 0 && (
-                      <div className="flex justify-between text-slate-500 text-[11px]">
-                        <span>Estimasi UMKM:</span>
-                        <span>Rp {item.umkmPrice?.toLocaleString("id-ID")}/kg</span>
+                      <div className="flex justify-between text-slate-500 text-[11px] gap-2">
+                        <span className="min-w-0 truncate">Estimasi UMKM:</span>
+                        <span className="shrink-0 whitespace-nowrap">{formatRupiah(item.umkmPrice)}/kg</span>
                       </div>
                     )}
                   </div>

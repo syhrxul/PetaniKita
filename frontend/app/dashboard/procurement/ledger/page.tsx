@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getProcurementLedger, addManualLedger, deleteManualLedger, getSession } from "@/lib/api";
+import { formatCompactRupiah, formatRupiah } from "@/lib/format";
 import { Wallet, PlusCircle, CheckCircle2, Trash2, ShoppingBag, Receipt, RefreshCw } from "lucide-react";
 
 export default function ProcurementLedgerPage() {
@@ -88,28 +89,28 @@ export default function ProcurementLedgerPage() {
 
       {/* 3 Metric Cards */}
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6">
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 min-w-0">
           <div className="flex justify-between items-start mb-2">
             <p className="text-slate-600 text-sm font-medium">Total Pengeluaran Bulan Ini</p>
-            <Wallet className="w-5 h-5 text-slate-600" strokeWidth={2} />
+            <Wallet className="w-5 h-5 text-slate-600 shrink-0" strokeWidth={2} />
           </div>
-          <p className="text-3xl font-bold text-slate-900">Rp {ledgerData.totalAmountRp.toLocaleString("id-ID")}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-900 truncate">{formatCompactRupiah(ledgerData.totalAmountRp)}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6">
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 min-w-0">
           <div className="flex justify-between items-start mb-2">
             <p className="text-slate-600 text-sm font-medium">Transaksi via PetaniKita</p>
-            <ShoppingBag className="w-5 h-5 text-emerald-600" strokeWidth={2} />
+            <ShoppingBag className="w-5 h-5 text-emerald-600 shrink-0" strokeWidth={2} />
           </div>
-          <p className="text-3xl font-bold text-emerald-700">Rp {ledgerData.totalAutoRp.toLocaleString("id-ID")}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-emerald-700 truncate">{formatCompactRupiah(ledgerData.totalAutoRp)}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6">
+        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 min-w-0">
           <div className="flex justify-between items-start mb-2">
             <p className="text-slate-600 text-sm font-medium">Belanja Manual Luar PetaniKita</p>
-            <Receipt className="w-5 h-5 text-slate-600" strokeWidth={2} />
+            <Receipt className="w-5 h-5 text-slate-600 shrink-0" strokeWidth={2} />
           </div>
-          <p className="text-3xl font-bold text-slate-800">Rp {ledgerData.totalManualRp.toLocaleString("id-ID")}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-slate-800 truncate">{formatCompactRupiah(ledgerData.totalManualRp)}</p>
         </div>
       </div>
 
@@ -248,8 +249,8 @@ export default function ProcurementLedgerPage() {
                           {e.source === "PetaniKita_Auto" ? "PetaniKita Auto" : "Manual Input"}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-900">
-                        Rp {e.amountRp.toLocaleString("id-ID")}
+                      <td className="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
+                        {formatRupiah(e.amountRp)}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         {e.source === "Manual_Input" ? (

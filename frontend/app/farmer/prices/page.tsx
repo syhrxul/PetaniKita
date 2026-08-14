@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getRegionalPrices, getCurrentUser, proposePrice, getSession, scrapePriceAI, getMultiRegionPrices, PriceRecord, PriceResponse } from "@/lib/api";
+import { formatRupiah } from "@/lib/format";
 import { TrendingUp, TrendingDown, Minus, RefreshCw, Database, Sparkles, MapPin, HandCoins, X, CheckCircle2, Bot, Globe2, Loader2 } from "lucide-react";
 
 export default function FarmerPricesPage() {
@@ -198,9 +199,9 @@ export default function FarmerPricesPage() {
             return (
               <div key={p.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900">{p.commodity}</h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-slate-900 truncate">{p.commodity}</h3>
                       <p className="text-xs text-slate-500">Harga Per Kg (Tingkat Petani)</p>
                     </div>
                     <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
@@ -216,19 +217,19 @@ export default function FarmerPricesPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-slate-500 mb-1">Harga Hari Ini</p>
-                      <p className="text-2xl font-bold text-slate-900">Rp {p.farmer_price.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-slate-900 truncate">{formatRupiah(p.farmer_price)}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-slate-500 mb-1">Harga Kemarin</p>
-                      <p className="text-lg font-semibold text-slate-600 mt-1">Rp {p.prev_price.toLocaleString()}</p>
+                      <p className="text-lg font-semibold text-slate-600 mt-1 truncate">{formatRupiah(p.prev_price)}</p>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-                    <span>Harga UMKM: Rp {p.umkm_price.toLocaleString()}</span>
-                    <span>HAP: Rp {p.hap_price.toLocaleString()}</span>
+                  <div className="pt-2 border-t border-slate-100 flex justify-between items-center gap-2 text-xs text-slate-500">
+                    <span className="min-w-0 truncate">Harga UMKM: {formatRupiah(p.umkm_price)}</span>
+                    <span className="shrink-0">HAP: {formatRupiah(p.hap_price)}</span>
                   </div>
                 </div>
 
@@ -275,18 +276,18 @@ export default function FarmerPricesPage() {
                   <p className="text-sm font-bold text-slate-900">{item.regionName}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-slate-500">Petani</p>
-                    <p className="font-bold text-slate-900">Rp {item.farmerPrice.toLocaleString()}</p>
+                    <p className="font-bold text-slate-900 truncate">{formatRupiah(item.farmerPrice)}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-slate-500">UMKM</p>
-                    <p className="font-bold text-emerald-700">Rp {item.umkmPrice.toLocaleString()}</p>
+                    <p className="font-bold text-emerald-700 truncate">{formatRupiah(item.umkmPrice)}</p>
                   </div>
                 </div>
-                <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                  <span className="text-[10px] text-slate-400">HAP: Rp {item.hapPrice.toLocaleString()}</span>
-                  <span className={`text-[10px] font-bold ${item.trend === "UP" ? "text-emerald-600" : item.trend === "DOWN" ? "text-rose-600" : "text-slate-500"}`}>
+                <div className="pt-2 border-t border-slate-100 flex justify-between items-center gap-2">
+                  <span className="text-[10px] text-slate-400 min-w-0 truncate">HAP: {formatRupiah(item.hapPrice)}</span>
+                  <span className={`text-[10px] font-bold shrink-0 ${item.trend === "UP" ? "text-emerald-600" : item.trend === "DOWN" ? "text-rose-600" : "text-slate-500"}`}>
                     {item.trend}
                   </span>
                 </div>
@@ -321,8 +322,8 @@ export default function FarmerPricesPage() {
                 <label className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-2">
                   Harga Acuan Saat Ini
                 </label>
-                <p className="text-base font-bold text-slate-700 bg-slate-100 p-3 rounded-xl">
-                  Rp {selectedCommodity.farmer_price.toLocaleString()} / kg
+                <p className="text-base font-bold text-slate-700 bg-slate-100 p-3 rounded-xl truncate">
+                  {formatRupiah(selectedCommodity.farmer_price)} / kg
                 </p>
               </div>
 

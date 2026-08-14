@@ -53,11 +53,9 @@ export default function FarmerLayout({ children }: { children: React.ReactNode }
       <ResponsiveSidebar
         items={navItems}
         roleLabel="Petani"
-        badgeLabel="MITRA PETANI"
         userName={name}
         userSubtitle={region}
         onLogout={logout}
-        theme="emerald"
       />
 
       {/* Konten: diberi offset kiri di desktop & offset atas di mobile */}

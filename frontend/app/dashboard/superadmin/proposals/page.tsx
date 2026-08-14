@@ -84,26 +84,26 @@ export default function SuperadminProposalsPage() {
             {/* Kartu Ringkasan Aspirasi */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-4">
               <div className="flex items-center gap-3">
-                <span className="p-3 bg-amber-100 text-amber-800 rounded-xl font-bold text-sm">
+                <span className="p-3 bg-amber-100 text-amber-800 rounded-xl font-bold text-sm shrink-0">
                   {data.summary.totalFarmers} Petani
                 </span>
-                <h2 className="text-2xl font-bold text-slate-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 min-w-0 truncate">
                   {data.summary.totalFarmers} Petani di {data.summary.regionName} Meminta Kenaikan Harga {data.summary.commodity}
                 </h2>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-500 mb-1">Harga Resmi Saat Ini</p>
-                  <p className="text-2xl font-bold text-slate-900">Rp {data.summary.currentPrice.toLocaleString()} / kg</p>
+                  <p className="text-2xl font-bold text-slate-900 truncate">Rp {data.summary.currentPrice.toLocaleString()} / kg</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-500 mb-1">Rata-Rata Pengajuan Petani</p>
-                  <p className="text-2xl font-bold text-amber-600">Rp {data.summary.avgProposedPrice.toLocaleString()} / kg</p>
+                  <p className="text-2xl font-bold text-amber-600 truncate">Rp {data.summary.avgProposedPrice.toLocaleString()} / kg</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-slate-500 mb-1">Total Aspirasi</p>
-                  <p className="text-2xl font-bold text-slate-800">{data.summary.totalFarmers} Orang</p>
+                  <p className="text-2xl font-bold text-slate-800 truncate">{data.summary.totalFarmers} Orang</p>
                 </div>
               </div>
 
@@ -131,9 +131,9 @@ export default function SuperadminProposalsPage() {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6 bg-slate-800/60 p-6 rounded-xl border border-slate-700/50">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-slate-300 mb-1">Rekomendasi Harga AI Penengah</p>
-                    <p className="text-4xl font-bold text-emerald-400">
+                    <p className="text-2xl sm:text-4xl font-bold text-emerald-400 truncate">
                       Rp {data.aiAnalysis.recommendedPrice.toLocaleString()} / kg
                     </p>
                   </div>

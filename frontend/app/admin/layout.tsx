@@ -77,7 +77,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         userName={username}
         userSubtitle="Administrator Sistem"
         onLogout={logout}
-        theme="slate"
       />
 
       <main className="md:pl-64 pt-16 md:pt-0">

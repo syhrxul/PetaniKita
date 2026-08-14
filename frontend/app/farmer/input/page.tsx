@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { submitHarvest, getUserHarvests, getRegionalPrices, getSession, getCurrentUser, getLastFarmProfile, HarvestRecord, PriceRecord } from "@/lib/api";
+import { formatCompactRupiah, formatKg, formatRupiah } from "@/lib/format";
 import GeolocationInput from "@/components/GeolocationInput";
 import { SkeletonGrid } from "@/components/ui/SkeletonCard";
 import CustomSelect from "@/components/ui/CustomSelect";
@@ -150,9 +151,9 @@ export default function FarmerInputPage() {
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header Welcome */}
       <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-2xl p-6 sm:p-8 flex justify-between items-center shadow-sm">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1">Selamat Datang, {farmerName}</h1>
-          <p className="text-emerald-100 text-sm sm:text-base">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 truncate">Selamat Datang, {farmerName}</h1>
+          <p className="text-emerald-100 text-sm sm:text-base truncate">
             Poktan Tani Makmur — {formData.regionName || "Kabupaten Sleman"}
           </p>
         </div>
@@ -160,35 +161,35 @@ export default function FarmerInputPage() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 min-w-0">
           <div className="flex items-start justify-between mb-3">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Proyeksi Panen</p>
-              <p className="text-2xl font-black text-slate-900">{totalKg} Kg</p>
+              <p className="text-2xl font-black text-slate-900 truncate">{formatKg(totalKg)}</p>
             </div>
-            <Sprout className="w-7 h-7 text-emerald-600" strokeWidth={2} />
+            <Sprout className="w-7 h-7 text-emerald-600 shrink-0" strokeWidth={2} />
           </div>
           <p className="text-xs text-slate-400 font-medium">{harvests.length} komoditas aktif</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 min-w-0">
           <div className="flex items-start justify-between mb-3">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Est. Pendapatan Escrow</p>
-              <p className="text-2xl font-black text-slate-900">Rp {(lockedKg * 28000).toLocaleString("id-ID")}</p>
+              <p className="text-2xl font-black text-slate-900 truncate">{formatCompactRupiah(lockedKg * 28000)}</p>
             </div>
-            <Wallet className="w-7 h-7 text-amber-600" strokeWidth={2} />
+            <Wallet className="w-7 h-7 text-amber-600 shrink-0" strokeWidth={2} />
           </div>
           <p className="text-xs text-slate-400 font-medium">Berdasarkan acuan HAP</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 min-w-0">
           <div className="flex items-start justify-between mb-3">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Pesanan Siap Diambil</p>
-              <p className="text-2xl font-black text-slate-900">1 Order</p>
+              <p className="text-2xl font-black text-slate-900 truncate">1 Order</p>
             </div>
-            <Truck className="w-7 h-7 text-sky-600" strokeWidth={2} />
+            <Truck className="w-7 h-7 text-sky-600 shrink-0" strokeWidth={2} />
           </div>
           <p className="text-xs text-slate-400 font-medium">Kurir menuju lokasi</p>
         </div>
@@ -457,17 +458,17 @@ export default function FarmerInputPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {prices.map((p) => (
-              <div key={p.id} className="border border-slate-200/80 rounded-2xl p-5 bg-slate-50/50">
+              <div key={p.id} className="border border-slate-200/80 rounded-2xl p-5 bg-slate-50/50 min-w-0">
                 <div className="flex items-start justify-between mb-2">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-slate-500 text-xs font-bold mb-1">{p.commodity}</p>
-                    <p className="text-xl font-black text-slate-900">Rp {p.farmer_price.toLocaleString("id-ID")}</p>
+                    <p className="text-xl font-black text-slate-900 truncate">{formatCompactRupiah(p.farmer_price)}</p>
                   </div>
-                  {p.trend === "UP" && <TrendingUp className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />}
-                  {p.trend === "DOWN" && <TrendingDown className="w-5 h-5 text-rose-600" strokeWidth={2.5} />}
-                  {p.trend === "STABLE" && <div className="w-5 h-5 text-slate-400 font-bold text-center">—</div>}
+                  {p.trend === "UP" && <TrendingUp className="w-5 h-5 text-emerald-600 shrink-0" strokeWidth={2.5} />}
+                  {p.trend === "DOWN" && <TrendingDown className="w-5 h-5 text-rose-600 shrink-0" strokeWidth={2.5} />}
+                  {p.trend === "STABLE" && <div className="w-5 h-5 text-slate-400 font-bold text-center shrink-0">—</div>}
                 </div>
-                <p className="text-[11px] text-slate-400 font-medium">Harga Acuan (HAP): Rp {p.hap_price.toLocaleString("id-ID")}</p>
+                <p className="text-[11px] text-slate-400 font-medium truncate">Harga Acuan (HAP): {formatRupiah(p.hap_price)}</p>
               </div>
             ))}
           </div>

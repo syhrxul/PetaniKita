@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { getProcurementSuppliers, submitNegotiation } from "@/lib/api";
 import { getGoogleMapsPointUrl } from "@/lib/maps";
+import { formatRupiah } from "@/lib/format";
 import { ShoppingBag, MapPin, Send, X, CheckCircle2, Info, Leaf } from "lucide-react";
 
 export default function PublicMarketplacePage() {
@@ -94,29 +95,29 @@ export default function PublicMarketplacePage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map(p => (
-              <div key={p.harvestId} className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 flex flex-col justify-between space-y-4">
+              <div key={p.harvestId} className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 flex flex-col justify-between space-y-4 min-w-0">
                 <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900">{p.commodities}</h3>
-                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2} />
+                  <div className="flex justify-between items-start mb-3 gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-slate-900 truncate">{p.commodities}</h3>
+                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5 min-w-0 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" strokeWidth={2} />
                         {p.farmerName} • {p.regionName}
                       </p>
                     </div>
-                    <span className="text-xs font-mono font-bold px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-full border border-emerald-200">
+                    <span className="text-xs font-mono font-bold px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-full border border-emerald-200 shrink-0">
                       {p.distanceKm} km
                     </span>
                   </div>
 
                   <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/60 grid grid-cols-2 gap-3 mb-4">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-slate-500">Harga / Kg</p>
-                      <p className="text-xl font-bold text-slate-900">Rp {p.pricePerKg.toLocaleString("id-ID")}</p>
+                      <p className="text-xl font-bold text-slate-900 truncate">{formatRupiah(p.pricePerKg)}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-slate-500">Stok Tersedia</p>
-                      <p className="text-xl font-bold text-emerald-700">{p.availableYieldKg} Kg</p>
+                      <p className="text-xl font-bold text-emerald-700 truncate">{p.availableYieldKg} Kg</p>
                     </div>
                   </div>
                 </div>
@@ -166,9 +167,9 @@ export default function PublicMarketplacePage() {
             )}
 
             <form onSubmit={handleSubmitNegotiation} className="space-y-4">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
-                <span className="text-sm text-slate-600">Harga Normal:</span>
-                <span className="font-bold text-slate-900">Rp {selectedProduct.pricePerKg.toLocaleString("id-ID")} / Kg</span>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center gap-2">
+                <span className="text-sm text-slate-600 min-w-0 truncate">Harga Normal:</span>
+                <span className="font-bold text-slate-900 shrink-0 truncate">{formatRupiah(selectedProduct.pricePerKg)} / Kg</span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
